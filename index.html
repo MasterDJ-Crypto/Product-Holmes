@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Product Holmes - Analyst Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Instant Theme Injection to prevent FOUC (Flash of Unstyled Content)
+      try {
+        const storedTheme = localStorage.getItem('productHolmes_theme');
+        const theme = (storedTheme === 'dark') ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    </script>
+    <style>
+        :root {
+            /* --- Physics & Motion (Apple Spring + Fluent Deceleration) --- */
+            --ease-fluid: cubic-bezier(0.25, 1, 0.5, 1); /* Standard iOS/macOS ease */
+            --ease-snappy: cubic-bezier(0.2, 0, 0, 1); /* Fluent snappy enter */
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* Subtle spring */
+            
+            /* --- Typography (Native Stack) --- */
+            /* Prioritizes SF Pro (Apple) then Segoe UI (Microsoft) */
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+            /* --- Dark Mode (Default) Variables --- */
+            --bg-body: #000000; /* Apple Pure Black / Windows OLED */
+            --text-primary: #F5F5F7; /* Apple Off-White */
+            --text-secondary: #86868B; /* Apple Grey */
+            --brand-color: #0A84FF; /* Apple System Blue (Dark) */
+            
+            /* Inputs */
+            --input-bg: rgba(28, 28, 30, 0.8);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus-ring: rgba(10, 132, 255, 0.5);
+
+            /* Elevation */
+            --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --shadow-depth: 0 12px 32px rgba(0, 0, 0, 0.4);
+            
+            /* Glass Variables (Global fallbacks if needed) */
+            --glass-bg: rgba(28, 28, 30, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Light Mode Variables --- */
+        [data-theme="light"] {
+            --bg-body: #F5F5F7; /* Apple System Gray 6 */
+            --text-primary: #1D1D1F; /* Apple Near Black */
+            --text-secondary: #6E6E73;
+            --brand-color: #007AFF; /* Apple System Blue (Light) */
+            
+            /* Inputs */
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-border: rgba(0, 0, 0, 0.12);
+            --input-focus-ring: rgba(0, 122, 255, 0.3);
+
+            --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-depth: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            transition: background-color 0.5s var(--ease-fluid), color 0.5s var(--ease-fluid);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- THE LIQUID GLASS IMPLEMENTATION (User Specified) --- */
+        .liquid-glass {
+            position: relative;
+            /* Soft white tint with very low opacity for high transparency */
+            background: rgba(255, 255, 255, 0.03); 
+            border-radius: 24px;
+            padding: 20px;
+            
+            /* The core frosted blur */
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            
+            /* Thin high-contrast border to simulate the glass edge */
+            border: 0.5px solid rgba(255, 255, 255, 0.3);
+            
+            /* Shadow for depth: outer soft shadow + inner glow */
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            
+            overflow: hidden;
+            
+            /* Maintain the transition for interactions */
+            transition: transform 0.3s var(--ease-fluid), box-shadow 0.3s var(--ease-fluid), opacity 0.3s ease;
+            transform: translateZ(0); /* GPU acceleration */
+        }
+
+        /* Pseudo-element for the 'liquid' light refraction/shine */
+        .liquid-glass::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: inherit;
+            
+            /* Gradient simulates the material thickness and top-down light */
+            background: linear-gradient(
+                135deg, 
+                rgba(255, 255, 255, 0.15) 0%, 
+                rgba(255, 255, 255, 0) 40%, 
+                rgba(255, 255, 255, 0) 60%, 
+                rgba(255, 255, 255, 0.05) 100%
+            );
+            
+            /* Additional inner shadows for "thick" material feel */
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.3),
+                inset 0 -1px 20px rgba(255, 255, 255, 0.05);
+            
+            z-index: 1;
+        }
+        
+        /* Ensure content sits above the shine */
+        .liquid-glass > * {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Light Mode Overrides for Liquid Glass to ensure visibility */
+        [data-theme="light"] .liquid-glass {
+            background: rgba(255, 255, 255, 0.35); /* Increased transparency for light mode too */
+            border: 0.5px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.05),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+        [data-theme="light"] .liquid-glass::after {
+            background: linear-gradient(
+                135deg, 
+                rgba(255, 255, 255, 0.6) 0%, 
+                rgba(255, 255, 255, 0) 40%, 
+                rgba(255, 255, 255, 0) 60%, 
+                rgba(255, 255, 255, 0.2) 100%
+            );
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.7),
+                inset 0 -1px 20px rgba(255, 255, 255, 0.1);
+        }
+
+
+        /* --- THEME ADAPTATION UTILITIES --- */
+        
+        /* STRICT OVERRIDES: Ensure white text exists on brand/dark buttons regardless of theme */
+        /* Specificity boosted to override [data-theme] selectors */
+        html body .text-always-white, 
+        html body .text-always-white:hover { 
+            color: #FFFFFF !important; 
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        
+        /* Hover variant for interactions */
+        html body .hover-text-always-white:hover {
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+
+        /* Light Mode Inversions */
+        [data-theme="light"] .text-white { color: #1D1D1F !important; }
+        [data-theme="light"] .text-gray-300 { color: #6E6E73 !important; }
+        [data-theme="light"] .text-gray-400 { color: #86868B !important; }
+        [data-theme="light"] .text-gray-500 { color: #98989D !important; }
+        
+        /* Background inversions */
+        [data-theme="light"] .bg-black { background-color: #FFFFFF !important; }
+        [data-theme="light"] .bg-\[\#121212\] { background-color: #FFFFFF !important; }
+        [data-theme="light"] .border-white\/10 { border-color: rgba(0,0,0,0.1) !important; }
+        [data-theme="light"] .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
+        [data-theme="light"] .bg-white\/5 { background-color: rgba(0,0,0,0.05) !important; }
+        [data-theme="light"] .bg-white\/10 { background-color: rgba(0,0,0,0.08) !important; }
+        [data-theme="light"] .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.05) !important; }
+        [data-theme="light"] .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.1) !important; }
+
+        /* --- MOTION DESIGN --- */
+
+        @keyframes cinematicFadeUp {
+            0% { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(4px); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        
+        .animate-page-enter {
+            animation: cinematicFadeUp 0.8s var(--ease-fluid) forwards;
+            will-change: transform, opacity, filter;
+        }
+
+        .animate-list-enter {
+            opacity: 0;
+            animation: cinematicFadeUp 0.6s var(--ease-fluid) forwards;
+        }
+        
+        .animate-fade-in {
+             animation: cinematicFadeUp 0.6s var(--ease-fluid) forwards;
+        }
+
+        /* --- INTERACTION MODELS --- */
+
+        /* Direct Manipulation: Press states */
+        .apple-click {
+            cursor: pointer;
+            transition: transform 0.2s var(--ease-fluid), opacity 0.2s ease, filter 0.2s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .apple-click:active { 
+            transform: scale(0.96); 
+            opacity: 0.8;
+            filter: brightness(0.9);
+        }
+        
+        /* Hover Lift */
+        .apple-hover { 
+            transition: transform 0.4s var(--ease-fluid), box-shadow 0.4s var(--ease-fluid); 
+        }
+        .apple-hover:hover { 
+            transform: translateY(-4px); 
+            box-shadow: var(--shadow-depth);
+            z-index: 10; 
+        }
+
+        /* Inputs - Clean, Minimal, Focused */
+        .apple-input {
+            background-color: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            color: var(--text-primary) !important;
+            border-radius: 12px !important;
+            transition: all 0.3s var(--ease-fluid);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .apple-input:focus {
+            background-color: rgba(255,255,255,0.1) !important;
+            border-color: var(--brand-color) !important;
+            box-shadow: 0 0 0 4px var(--input-focus-ring);
+            outline: none;
+            transform: scale(1.005);
+        }
+        [data-theme="light"] .apple-input:focus {
+            background-color: #FFFFFF !important;
+        }
+        
+        /* Focus visible for accessibility (Microsoft Requirement) */
+        *:focus-visible {
+            outline: 2px solid var(--brand-color);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Utilities */
+        .data-grid-container { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+        [data-theme="light"] .data-grid-container { border-color: rgba(0,0,0,0.1); }
+        
+        .data-grid { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; color: inherit; }
+        
+        .data-grid th { 
+            text-align: left; 
+            padding: 14px 20px; 
+            font-weight: 600; 
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            white-space: nowrap; 
+            background: rgba(30,30,30,0.3); /* Transparent dark for Glass effect */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            letter-spacing: -0.01em;
+            position: sticky; /* STICKY HEADER FIX */
+            top: 0;
+            z-index: 20;
+        }
+        
+        [data-theme="light"] .data-grid th { 
+            border-bottom-color: rgba(0,0,0,0.1); 
+            background: rgba(255,255,255,0.5);
+            color: #6E6E73;
+        }
+        
+        .data-grid td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+        [data-theme="light"] .data-grid td { border-bottom-color: rgba(0,0,0,0.05); }
+
+        .data-grid tr:last-child td { border-bottom: none; }
+        .data-grid tr:hover td { background-color: rgba(255,255,255,0.05); }
+        [data-theme="light"] .data-grid tr:hover td { background-color: rgba(0,0,0,0.05); }
+        
+        .font-mono-numbers { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+        
+        /* Scrollbar - Unobtrusive */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(128, 128, 128, 0.3); 
+            border-radius: 4px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.1.0",
+        "react/": "https://esm.sh/react@^19.1.0/",
+        "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+        "@google/genai": "https://esm.sh/@google/genai@^1.5.1",
+        "xlsx": "https://esm.sh/xlsx@^0.18.5",
+        "chart.js": "https://esm.sh/chart.js@^4.4.3",
+        "react-chartjs-2": "https://esm.sh/react-chartjs-2@^5.2.0"
+      }
+    }
+    </script>
+</head>
+<body class="selection:bg-blue-500 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
