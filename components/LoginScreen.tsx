@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { UserIcon } from './icons/UserIcon';
 import { LockIcon } from './icons/LockIcon';
 
@@ -8,6 +9,7 @@ interface LoginScreenProps {
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToSignUp }) => {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,20 +20,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
     emailInputRef.current?.focus();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isAttemptingLogin) return;
     setError(null);
     setIsAttemptingLogin(true);
-    setTimeout(() => {
-      if (email === 'productholmes@test.com' && password === '1234') {
-        onLoginSuccess();
-      } else {
-        setError('Invalid credentials.');
-        setPassword('');
-      }
-      setIsAttemptingLogin(false);
-    }, 750);
+
+    // Hardcoded demo/beta bypass
+    if (email === 'productholmes@test.com' && password === '1234') {
+        setTimeout(() => {
+            onLoginSuccess();
+            setIsAttemptingLogin(false);
+        }, 750);
+        return;
+    }
+
+    // Default: WorkOS AuthKit
+    try {
+        await signIn();
+        // Redirect happens automatically
+    } catch (err) {
+        console.error(err);
+        setError('Authentication failed. Please try again.');
+        setIsAttemptingLogin(false);
+    }
   };
 
   return (

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@workos-inc/authkit-react';
 import Header from './components/Header';
 import Footer from './components/icons/Footer';
 import SearchBar from './components/SearchBar';
@@ -46,6 +47,7 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 const APP_STORAGE_KEY = 'productHolmes_appStorage';
 const AUTH_KEY = 'productHolmes_isAuthenticated'; 
+const AUTH_PROVIDER_KEY = 'productHolmes_authProvider'; // 'workos' | 'demo'
 const SELECTED_PLAN_KEY = 'productHolmes_selectedPlan';
 const PAYMENT_COMPLETED_KEY = 'productHolmes_paymentCompleted';
 const FREE_TIER_SCANS_COUNT_KEY = 'productHolmes_freeTierScansCount';
@@ -90,15 +92,17 @@ const initialFilterState: FilterState = {
 };
 
 const App: React.FC = () => {
-  // Theme Management
+  // --- WorkOS Auth Hook ---
+  const { user, isLoading: isAuthLoading, signOut, getAccessToken } = useAuth();
+
+  // --- Theme Management ---
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
         const storedTheme = localStorage.getItem('productHolmes_theme');
-        // Default to light if no stored preference, or if explicitly light
         if (storedTheme) {
             return (storedTheme === 'dark') ? 'dark' : 'light';
         }
-        return 'light'; // Default
+        return 'light'; 
     } catch { return 'light'; }
   });
 
@@ -111,33 +115,55 @@ const App: React.FC = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   }, []);
 
+  // --- Auth State Derivation (WorkOS + Demo Legacy) ---
+  const [isDemoAuthenticated, setIsDemoAuthenticated] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTH_KEY) === 'true'; } 
+    catch (e) { return false; }
+  });
+
+  const isAuthenticated = !!user || isDemoAuthenticated;
+
+  // --- View Routing Logic ---
   const getInitialView = (): AppView => {
-    try {
-      const isAuthenticated = localStorage.getItem(AUTH_KEY) === 'true';
-      if (!isAuthenticated) return 'landing';
+    // If we are loading auth, we might default to landing, but useEffect will fix it
+    if (!isAuthenticated) return 'landing';
 
-      const plan = localStorage.getItem(SELECTED_PLAN_KEY);
-      const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+    const plan = localStorage.getItem(SELECTED_PLAN_KEY);
+    const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
 
-      if (!plan) return 'subscription';
-      if (!paymentCompleted) return 'payment';
-      return 'app';
-    } catch (e) {
-      console.warn("Could not determine initial view from localStorage", e);
-      return 'landing';
-    }
+    if (!plan) return 'subscription';
+    if (!paymentCompleted) return 'payment';
+    return 'app';
   };
   
   const [currentView, setCurrentView] = useState<AppView>(getInitialView);
   
+  // Effect to handle view transitions when auth state settles (e.g. returning from WorkOS redirect)
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (isAuthenticated) {
+        // Automatically route to the correct internal view if currently on landing/login/signup
+        if (['landing', 'login', 'signup'].includes(currentView)) {
+           const plan = localStorage.getItem(SELECTED_PLAN_KEY);
+           const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+           
+           if (!plan) setCurrentView('subscription');
+           else if (!paymentCompleted) setCurrentView('payment');
+           else setCurrentView('app');
+        }
+      } else {
+        // If not authenticated and seemingly inside the app, kick to landing
+        if (['subscription', 'payment', 'app'].includes(currentView)) {
+           setCurrentView('landing');
+        }
+      }
+    }
+  }, [isAuthenticated, isAuthLoading, currentView]);
+
+
   const [selectedPlan, setSelectedPlan] = useState<string | null>(() => {
     try { return localStorage.getItem(SELECTED_PLAN_KEY); } 
     catch (e) { return null; }
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try { return localStorage.getItem(AUTH_KEY) === 'true'; } 
-    catch (e) { return false; }
   });
 
   const [productInstances, setProductInstances] = useState<Map<string, ProductInstanceData>>(new Map());
@@ -150,6 +176,7 @@ const App: React.FC = () => {
   const [freeTierScansThisMonth, setFreeTierScansThisMonth] = useState<number>(0);
   const [lastFreeTierScanReset, setLastFreeTierScanReset] = useState<number | null>(null);
 
+  // Load App Data from Storage
   useEffect(() => {
     if (currentView === 'app') {
       try {
@@ -209,6 +236,7 @@ const App: React.FC = () => {
     }
   }, [currentView]); 
 
+  // Save App Data to Storage
   useEffect(() => {
     if (currentView === 'app') {
       try {
@@ -533,29 +561,40 @@ const App: React.FC = () => {
     setShowProductMenu(prev => !prev);
   }, []);
 
+  // --- Auth Handlers ---
   const handleLoginSuccess = useCallback(() => {
-    setIsAuthenticated(true);
-    try {
-      localStorage.setItem(AUTH_KEY, 'true');
-      const plan = localStorage.getItem(SELECTED_PLAN_KEY);
-      const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+    // This is called by legacy/demo login
+    setIsDemoAuthenticated(true);
+    localStorage.setItem(AUTH_KEY, 'true');
+    localStorage.setItem(AUTH_PROVIDER_KEY, 'demo');
+    
+    // Check flow state
+    const plan = localStorage.getItem(SELECTED_PLAN_KEY);
+    const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+    setSelectedPlan(plan);
 
-      setSelectedPlan(plan);
-
-      if (plan && paymentCompleted) setCurrentView('app');
-      else if (plan) setCurrentView('payment'); 
-      else setCurrentView('subscription');
-    } catch (e) { setCurrentView('subscription'); }
+    if (plan && paymentCompleted) setCurrentView('app');
+    else if (plan) setCurrentView('payment'); 
+    else setCurrentView('subscription');
   }, []);
 
-  const handleLogout = useCallback(() => {
-    setIsAuthenticated(false);
-    try {
+  const handleLogout = useCallback(async () => {
+    // Determine provider to cleanup correctly
+    const provider = localStorage.getItem(AUTH_PROVIDER_KEY);
+    
+    if (provider === 'demo') {
+      setIsDemoAuthenticated(false);
       localStorage.removeItem(AUTH_KEY);
-    } catch (e) { console.warn(e); }
+      localStorage.removeItem(AUTH_PROVIDER_KEY);
+    } else {
+      // WorkOS SignOut
+      await signOut(); 
+    }
+    
+    // Clear view state
     setCurrentView('landing'); 
     setShowProductMenu(false);
-  }, []);
+  }, [signOut]);
 
   const handleSelectPlan = useCallback((planName: string) => {
     setSelectedPlan(planName);
@@ -611,6 +650,17 @@ const App: React.FC = () => {
     setFilters(initialFilterState);
   }, []);
 
+  const handleTestToken = async () => {
+    try {
+        const token = await getAccessToken();
+        console.log("Access Token:", token);
+        alert("Access Token retrieved! Check console.");
+    } catch (e) {
+        console.error("Failed to get access token", e);
+        alert("Failed to get token. Are you logged in via WorkOS?");
+    }
+  };
+
   useEffect(() => {
     if (currentView === 'app' && isAuthenticated) { 
         setProductInstances(prevInstances => {
@@ -631,6 +681,13 @@ const App: React.FC = () => {
     }
   }, [selectedPlan, currentView, isAuthenticated]);
 
+  if (isAuthLoading) {
+    return (
+      <div className="w-full h-screen bg-[var(--bg-body)] flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   
   if (currentView === 'landing') return (
     <div key="landing" className="w-full h-full animate-page-enter">
@@ -806,7 +863,11 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-      <Footer />
+      <Footer>
+        <button onClick={handleTestToken} className="text-[10px] text-gray-600 hover:text-gray-400">
+             API Connection Test (Auth Only)
+        </button>
+      </Footer>
     </div>
   );
 };

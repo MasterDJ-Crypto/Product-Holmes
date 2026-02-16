@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { UserIcon } from './icons/UserIcon';
 import { LockIcon } from './icons/LockIcon';
 import { BuildingIcon } from './icons/BuildingIcon';
@@ -11,6 +12,7 @@ interface SignUpScreenProps {
 }
 
 const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigateToLogin }) => {
+  const { signUp } = useAuth();
   const [companyName, setCompanyName] = useState('');
   const [fullName, setFullName] = useState('');
   const [position, setPosition] = useState('');
@@ -28,7 +30,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
     companyNameInputRef.current?.focus();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSigningUp) return;
 
@@ -42,9 +44,15 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
     }
 
     setIsSigningUp(true);
-    setTimeout(() => {
-      onSignUpSuccess(); 
-    }, 1000);
+    
+    try {
+        await signUp();
+        // Redirect happens automatically
+    } catch (err) {
+        console.error(err);
+        setError('Sign up failed. Please try again.');
+        setIsSigningUp(false);
+    }
   };
 
   return (
@@ -169,7 +177,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                 disabled={isSigningUp}
                 className="w-full py-3 rounded-full font-semibold shadow-sm backdrop-blur-md transition-all apple-click border border-[var(--glass-border)] bg-[var(--text-primary)]/10 text-[var(--text-primary)] hover:bg-[var(--text-primary)]/20 mt-4 disabled:opacity-50"
             >
-                {isSigningUp ? 'Creating Account...' : 'Register'}
+                {isSigningUp ? 'Redirecting to Auth...' : 'Register'}
             </button>
           </form>
         </div>
