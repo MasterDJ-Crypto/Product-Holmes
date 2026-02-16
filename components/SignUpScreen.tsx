@@ -48,11 +48,11 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--bg-body)] text-[var(--text-primary)] flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg animate-fade-in">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Create Account</h1>
-          <p className="text-gray-400">Join the intelligence network.</p>
+          <p className="text-[var(--text-secondary)]">Join the intelligence network.</p>
         </div>
 
         <div className="liquid-glass p-8 space-y-6">
@@ -60,9 +60,9 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
             <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Company</label>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Company</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3 text-gray-500"><BuildingIcon className="w-4 h-4"/></span>
+                            <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><BuildingIcon className="w-4 h-4"/></span>
                             <input
                                 ref={companyNameInputRef}
                                 type="text"
@@ -71,14 +71,14 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                                 placeholder="Organization"
                                 required
                                 disabled={isSigningUp}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600"
+                                className="w-full bg-white/5 border border-[var(--glass-border)] rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500"
                             />
                         </div>
                     </div>
                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Role</label>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Role</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3 text-gray-500"><BriefcaseIcon className="w-4 h-4"/></span>
+                            <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><BriefcaseIcon className="w-4 h-4"/></span>
                             <input
                                 type="text"
                                 value={position}
@@ -86,16 +86,16 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                                 placeholder="Position"
                                 required
                                 disabled={isSigningUp}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600"
+                                className="w-full bg-white/5 border border-[var(--glass-border)] rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500"
                             />
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Full Name</label>
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Full Name</label>
                     <div className="relative">
-                        <span className="absolute left-3 top-3 text-gray-500"><UserIcon className="w-4 h-4"/></span>
+                        <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><UserIcon className="w-4 h-4"/></span>
                         <input
                             type="text"
                             value={fullName}
@@ -103,15 +103,15 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                             placeholder="John Doe"
                             required
                             disabled={isSigningUp}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600"
+                            className="w-full bg-white/5 border border-[var(--glass-border)] rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Email</label>
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Email</label>
                     <div className="relative">
-                        <span className="absolute left-3 top-3 text-gray-500"><EmailIcon className="w-4 h-4"/></span>
+                        <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><EmailIcon className="w-4 h-4"/></span>
                         <input
                             type="email"
                             value={email}
@@ -119,16 +119,16 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                             placeholder="name@company.com"
                             required
                             disabled={isSigningUp}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600"
+                            className="w-full bg-white/5 border border-[var(--glass-border)] rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500"
                         />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Password</label>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Password</label>
                          <div className="relative">
-                            <span className="absolute left-3 top-3 text-gray-500"><LockIcon className="w-4 h-4"/></span>
+                            <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><LockIcon className="w-4 h-4"/></span>
                             <input
                                 type="password"
                                 value={password}
@@ -136,14 +136,14 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                                 placeholder="••••••"
                                 required
                                 disabled={isSigningUp}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600"
+                                className="w-full bg-white/5 border border-[var(--glass-border)] rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Confirm</label>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Confirm</label>
                         <div className="relative">
-                            <span className="absolute left-3 top-3 text-gray-500"><LockIcon className="w-4 h-4"/></span>
+                            <span className="absolute left-3 top-3 text-[var(--text-secondary)]"><LockIcon className="w-4 h-4"/></span>
                             <input
                                 type="password"
                                 value={confirmPassword}
@@ -151,7 +151,7 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
                                 placeholder="••••••"
                                 required
                                 disabled={isSigningUp}
-                                className={`w-full bg-white/5 border rounded-lg pl-9 pr-4 py-3 text-sm text-white outline-none apple-input placeholder-gray-600 ${passwordMismatchError ? 'border-red-500/50' : 'border-white/10 focus:border-white/30'}`}
+                                className={`w-full bg-white/5 border rounded-lg pl-9 pr-4 py-3 text-sm text-[var(--text-primary)] outline-none apple-input placeholder-gray-500 ${passwordMismatchError ? 'border-red-500/50' : 'border-[var(--glass-border)] focus:border-[var(--text-primary)]/30'}`}
                             />
                         </div>
                     </div>
@@ -167,18 +167,18 @@ const SignUpScreen: React.FC<SignUpScreenProps> = ({ onSignUpSuccess, onNavigate
             <button
                 type="submit"
                 disabled={isSigningUp}
-                className="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-200 apple-click disabled:opacity-50 mt-4"
+                className="w-full py-3 rounded-full font-semibold shadow-sm backdrop-blur-md transition-all apple-click border border-[var(--glass-border)] bg-[var(--text-primary)]/10 text-[var(--text-primary)] hover:bg-[var(--text-primary)]/20 mt-4 disabled:opacity-50"
             >
                 {isSigningUp ? 'Creating Account...' : 'Register'}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
+        <p className="text-center text-sm text-[var(--text-secondary)] mt-8">
           Already have an account?{' '}
           <button
             onClick={onNavigateToLogin}
-            className="text-white hover:underline apple-click scale-[0.9] hover:scale-100"
+            className="text-[var(--text-primary)] hover:underline apple-click scale-[0.9] hover:scale-100"
           >
             Log In
           </button>

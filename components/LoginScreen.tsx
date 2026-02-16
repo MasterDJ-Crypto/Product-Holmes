@@ -35,15 +35,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--bg-body)] flex flex-col items-center justify-center p-6 text-[var(--text-primary)]">
       
       <div className="w-full max-w-md animate-fade-in">
-        <h1 className="text-3xl font-bold text-center mb-8 tracking-tight text-white">Analyst Login</h1>
+        <h1 className="text-3xl font-bold text-center mb-8 tracking-tight">Analyst Login</h1>
 
         <div className="liquid-glass p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 Identity
                 </label>
                 <div className="relative group">
@@ -52,7 +52,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white outline-none apple-input"
+                    className="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-4 py-3 text-[var(--text-primary)] outline-none apple-input"
                     placeholder="agent@id"
                     disabled={isAttemptingLogin}
                 />
@@ -60,7 +60,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
             </div>
 
             <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
                 Passcode
                 </label>
                 <div className="relative group">
@@ -68,7 +68,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white outline-none apple-input"
+                    className="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-4 py-3 text-[var(--text-primary)] outline-none apple-input"
                     placeholder="••••"
                     disabled={isAttemptingLogin}
                 />
@@ -84,7 +84,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
             <button
                 type="submit"
                 disabled={isAttemptingLogin}
-                className="w-full bg-white text-black font-semibold py-3 rounded-lg apple-click"
+                className="w-full py-3 rounded-full font-semibold shadow-sm backdrop-blur-md transition-all apple-click border border-[var(--glass-border)] bg-[var(--text-primary)]/10 text-[var(--text-primary)] hover:bg-[var(--text-primary)]/20 disabled:opacity-50"
             >
                 {isAttemptingLogin ? 'Authenticating...' : 'Enter System'}
             </button>
@@ -94,9 +94,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
         <div className="mt-8 text-center">
             <button
             onClick={onNavigateToSignUp}
-            className="text-sm text-gray-500 hover:text-white transition-colors apple-click scale-[0.9] hover:scale-100"
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors apple-click scale-[0.9] hover:scale-100"
             >
-            Register New Agent
+            Register a New Account
             </button>
         </div>
       </div>
