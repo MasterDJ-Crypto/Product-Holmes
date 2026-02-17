@@ -33,15 +33,16 @@ export interface Issue {
   lastDetected: string; // ISO date string
 }
 
-// For Gemini response parsing
 export interface GeminiSourceResponse {
-    type: string; // Keep flexible from Gemini, map to SourceType later
-    url: string;
-    title: string;
+  type: string;
+  url: string;
+  title: string;
 }
+
+// For Gemini response parsing
 export interface GeminiIssueResponse {
   description: string;
-  category:string;
+  category: string;
   sources: GeminiSourceResponse[];
 }
 
@@ -80,3 +81,13 @@ export interface FilterState {
   startDate: string | null; // ISO date string YYYY-MM-DD
   endDate: string | null;   // ISO date string YYYY-MM-DD
 }
+
+// B2B Architecture Views
+export type AppView = 
+  | 'landing'           // Public Marketing Page
+  | 'login'             // Employee Login Fortress (No signup allowed)
+  | 'create_workspace'  // Admin Purchase Flow (The ONLY way to make an Org)
+  | 'admin_setup'       // The "Wizard" (Invites vs SSO)
+  | 'subscription'
+  | 'payment'
+  | 'app';              // The actual app

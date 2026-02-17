@@ -7,14 +7,15 @@ import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import WeeklyScanTimer from './components/WeeklyScanTimer';
 import LoginScreen from './components/LoginScreen';
-import SignUpScreen from './components/SignUpScreen';
+import OrganizationSetupWizard from './components/OrganizationSetupWizard';
+import AdminSetupDashboard from './components/AdminSetupDashboard';
 import ComparisonLayout from './components/ComparisonLayout';
 import CompetitorControls from './components/CompetitorControls';
 import SubscriptionPage from './components/SubscriptionPage';
 import PaymentPage from './components/PaymentPage';
 import LandingPage from './components/LandingPage';
 import { analyzeProductFeedback } from './services/feedbackAnalyzerService';
-import { Issue, ProductInstanceData, AppStorage, FilterState } from './types';
+import { Issue, ProductInstanceData, AppStorage, FilterState, AppView } from './types';
 import ProductInstanceMenu from './components/ProductInstanceMenu'; 
 import { DocumentMagnifyingGlassIcon } from './components/icons/DocumentMagnifyingGlassIcon';
 import {
@@ -29,6 +30,11 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+
+// NOTE TO DEVELOPER: 
+// You MUST go to WorkOS Dashboard -> Authentication -> Settings 
+// and DISABLE "Allow Self-Service Signups". 
+// This ensures the /login route rejects anyone who hasn't been explicitly invited or provisioned via SSO.
 
 ChartJS.register(
   CategoryScale,
@@ -52,6 +58,7 @@ const SELECTED_PLAN_KEY = 'productHolmes_selectedPlan';
 const PAYMENT_COMPLETED_KEY = 'productHolmes_paymentCompleted';
 const FREE_TIER_SCANS_COUNT_KEY = 'productHolmes_freeTierScansCount';
 const FREE_TIER_LAST_RESET_KEY = 'productHolmes_freeTierLastReset';
+const IS_NEW_ADMIN_KEY = 'productHolmes_isNewAdmin'; // Track if user just created the workspace
 
 const sortIssuesByOccurrences = (issues: Issue[]): Issue[] => {
   return [...issues].sort((a, b) => (b.totalOccurrences || 0) - (a.totalOccurrences || 0));
@@ -73,8 +80,6 @@ const createNewProductInstance = (id?: string, name: string = ''): ProductInstan
   isCompetitorLoading: false,
   competitorError: null,
 });
-
-export type AppView = 'landing' | 'login' | 'signup' | 'subscription' | 'payment' | 'app';
 
 interface AnalysisQueueItem {
   instanceId: string;
@@ -123,37 +128,49 @@ const App: React.FC = () => {
 
   const isAuthenticated = !!user || isDemoAuthenticated;
 
-  // --- View Routing Logic ---
+  // --- View Routing Logic (B2B Architecture) ---
   const getInitialView = (): AppView => {
-    // If we are loading auth, we might default to landing, but useEffect will fix it
     if (!isAuthenticated) return 'landing';
+
+    // If authenticated, check if they are in the middle of Admin Setup
+    const isNewAdmin = localStorage.getItem(IS_NEW_ADMIN_KEY) === 'true';
+    if (isNewAdmin) return 'admin_setup';
 
     const plan = localStorage.getItem(SELECTED_PLAN_KEY);
     const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
 
+    // If they are a normal user (or finished setup) but haven't paid/selected plan (Legacy Flow support)
     if (!plan) return 'subscription';
     if (!paymentCompleted) return 'payment';
+    
     return 'app';
   };
   
   const [currentView, setCurrentView] = useState<AppView>(getInitialView);
   
-  // Effect to handle view transitions when auth state settles (e.g. returning from WorkOS redirect)
+  // Effect to handle view transitions when auth state settles
   useEffect(() => {
     if (!isAuthLoading) {
       if (isAuthenticated) {
-        // Automatically route to the correct internal view if currently on landing/login/signup
-        if (['landing', 'login', 'signup'].includes(currentView)) {
-           const plan = localStorage.getItem(SELECTED_PLAN_KEY);
-           const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+        // "Traffic Cop" Logic
+        if (['landing', 'login', 'create_workspace'].includes(currentView)) {
+           const isNewAdmin = localStorage.getItem(IS_NEW_ADMIN_KEY) === 'true';
            
-           if (!plan) setCurrentView('subscription');
-           else if (!paymentCompleted) setCurrentView('payment');
-           else setCurrentView('app');
+           if (isNewAdmin) {
+             setCurrentView('admin_setup');
+           } else {
+             // Standard Employee / Legacy Flow
+             const plan = localStorage.getItem(SELECTED_PLAN_KEY);
+             const paymentCompleted = localStorage.getItem(PAYMENT_COMPLETED_KEY) === 'true';
+             
+             if (!plan) setCurrentView('subscription');
+             else if (!paymentCompleted) setCurrentView('payment');
+             else setCurrentView('app');
+           }
         }
       } else {
-        // If not authenticated and seemingly inside the app, kick to landing
-        if (['subscription', 'payment', 'app'].includes(currentView)) {
+        // If not authenticated and seemingly inside private routes, kick to landing
+        if (['subscription', 'payment', 'app', 'admin_setup'].includes(currentView)) {
            setCurrentView('landing');
         }
       }
@@ -561,6 +578,14 @@ const App: React.FC = () => {
     setShowProductMenu(prev => !prev);
   }, []);
 
+  const handleFiltersChange = useCallback((newFilters: Partial<FilterState>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(initialFilterState);
+  }, []);
+
   // --- Auth Handlers ---
   const handleLoginSuccess = useCallback(() => {
     // This is called by legacy/demo login
@@ -590,6 +615,7 @@ const App: React.FC = () => {
       // WorkOS SignOut
       await signOut(); 
     }
+    localStorage.removeItem(IS_NEW_ADMIN_KEY); // Clear admin session flag
     
     // Clear view state
     setCurrentView('landing'); 
@@ -638,17 +664,13 @@ const App: React.FC = () => {
   }, []);
 
   const handleGoToSubscription = useCallback(() => { setCurrentView('subscription'); }, []);
-  const handleNavigateToSignUp = useCallback(() => { setCurrentView('signup'); }, []);
-  const handleSignUpSuccess = useCallback(() => { setCurrentView('login'); }, []); 
+  const handleNavigateToCreateWorkspace = useCallback(() => { setCurrentView('create_workspace'); }, []);
   const handleNavigateToLogin = useCallback(() => { setCurrentView('login'); }, []);
-
-  const handleFiltersChange = useCallback((newFilterValues: Partial<FilterState>) => {
-    setFilters(prevFilters => ({ ...prevFilters, ...newFilterValues }));
+  const handleAdminSetupComplete = useCallback(() => {
+     localStorage.removeItem(IS_NEW_ADMIN_KEY);
+     setCurrentView('subscription'); 
   }, []);
 
-  const handleClearFilters = useCallback(() => {
-    setFilters(initialFilterState);
-  }, []);
 
   const handleTestToken = async () => {
     try {
@@ -691,19 +713,24 @@ const App: React.FC = () => {
   
   if (currentView === 'landing') return (
     <div key="landing" className="w-full h-full animate-page-enter">
-      <LandingPage onNavigateToLogin={handleNavigateToLogin} onNavigateToSignUp={handleNavigateToSignUp} />
+      <LandingPage onNavigateToLogin={handleNavigateToLogin} onNavigateToSignUp={handleNavigateToCreateWorkspace} />
     </div>
   );
   if (currentView === 'login') return (
     <div key="login" className="w-full h-full animate-page-enter">
-      <LoginScreen onLoginSuccess={handleLoginSuccess} onNavigateToSignUp={handleNavigateToSignUp} />
+      <LoginScreen onLoginSuccess={handleLoginSuccess} />
     </div>
   );
-  if (currentView === 'signup') return (
-    <div key="signup" className="w-full h-full animate-page-enter">
-      <SignUpScreen onSignUpSuccess={handleSignUpSuccess} onNavigateToLogin={handleNavigateToLogin} />
+  if (currentView === 'create_workspace') return (
+    <div key="create_workspace" className="w-full h-full animate-page-enter">
+        <OrganizationSetupWizard onNavigateToLogin={handleNavigateToLogin} />
     </div>
   );
+  if (currentView === 'admin_setup') return (
+      <div key="admin_setup" className="w-full h-full animate-page-enter">
+          <AdminSetupDashboard onComplete={handleAdminSetupComplete} />
+      </div>
+  )
   if (currentView === 'subscription') return (
     <div key="subscription" className="w-full h-full animate-page-enter">
       <SubscriptionPage currentPlan={selectedPlan} onSelectPlan={handleSelectPlan} />

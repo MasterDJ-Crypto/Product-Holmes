@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppView } from '../App';
+import { AppView } from '../types';
 import { PlusIcon } from './icons/PlusIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { SunIcon, MoonIcon } from './icons/ThemeIcons';

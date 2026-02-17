@@ -6,10 +6,10 @@ import { ChevronDownIcon } from './icons/ChevronDownIcon'; // Reusing as back ar
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
-  onNavigateToSignUp?: () => void;
+  onNavigateToSignUp?: () => void; // Kept in prop interface for compatibility but unused in UI
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToSignUp }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { signIn } = useAuth();
   
   // States: 'selection' (Fork in road) | 'demo_form' (Legacy email/pass)
@@ -66,8 +66,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
             /* --- SELECTION VIEW --- */
             <div className="space-y-8">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome Back</h1>
-                    <p className="text-[var(--text-secondary)]">Select your access method.</p>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">Employee Login</h1>
+                    <p className="text-[var(--text-secondary)]">Access your organization's workspace.</p>
                 </div>
 
                 <div className="space-y-4">
@@ -81,8 +81,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
                                 <LockIcon className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">Standard Access</h3>
-                                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Secure SSO & Email Login</p>
+                                <h3 className="font-semibold text-lg">Single Sign-On</h3>
+                                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Use your work email</p>
                             </div>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity -rotate-90 text-[var(--text-secondary)]">
@@ -100,8 +100,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
                                 <UserIcon className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">Beta Environment</h3>
-                                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Sandbox Credential Access</p>
+                                <h3 className="font-semibold text-lg">Demo Access</h3>
+                                <p className="text-xs text-[var(--text-secondary)] mt-0.5">Sandbox Environment</p>
                             </div>
                         </div>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity -rotate-90 text-[var(--text-secondary)]">
@@ -185,12 +185,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, onNavigateToS
         )}
 
         <div className="mt-8 text-center border-t border-[var(--glass-border)] pt-6">
-            <button
-            onClick={onNavigateToSignUp}
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors apple-click scale-[0.9] hover:scale-100"
-            >
-            Register a New Account
-            </button>
+            <p className="text-xs text-[var(--text-secondary)]">
+                Don't have an account? Please contact your Organization Admin for an invite.
+            </p>
         </div>
       </div>
     </div>
